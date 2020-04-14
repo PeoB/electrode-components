@@ -237,17 +237,18 @@ describe("setupSubAppHapiRoutes", () => {
   it("should let the server reply error stack if routeHandler throw an error", async () => {
     stubPathResolve = getStubResolve1();
     stubRouteHandler = sinon.stub(ReactWebapp, "makeRouteHandler").callsFake(() => async () => {
-      throw new Error();
+      throw new Error("Dev error here");
     });
     const logs = [];
     const stubConsoleError = sinon.stub(console, "error").callsFake(c => logs.push(c));
     await setupSubAppHapiRoutes(server, {});
     await server.start();
-    await server.inject({
+    const { result: devResult } = await server.inject({
       method: "GET",
       url: "/file2"
     });
     expect(logs[0]).to.equal("Route file2 failed:");
+    expect(devResult).to.include("Dev error here");
     stubConsoleError.restore();
     process.env.NODE_ENV = "production";
     const { result } = await server.inject({
